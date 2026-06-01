@@ -1,97 +1,90 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Legend Driver
 
-# Getting Started
+Field-operations app for Legend Rent-a-Car drivers. Built against the customer app contract documented in `legend-car-rental`.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Documentation
 
-## Step 1: Start Metro
+| Doc | Description |
+|-----|-------------|
+| [docs/USER_APP_OVERVIEW.md](./docs/USER_APP_OVERVIEW.md) | Customer app reference |
+| [docs/DRIVER_APP_SPEC.md](./docs/DRIVER_APP_SPEC.md) | Full driver build spec |
+| [docs/README.md](./docs/README.md) | Doc index |
+| [docs/DRIVER_UI_PARITY.md](./docs/DRIVER_UI_PARITY.md) | UI parity vs user app |
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Brand (colors & fonts)
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+Aligned with **legend-car-rental** (user app) — see `src/constants/colors.ts`, `src/constants/appFonts.ts`, `src/theme/`.
 
 ```sh
-# Using npm
+npm run link:fonts
+cd ios && pod install && cd ..
+```
+
+### Maps (Job map screen)
+
+- **iOS:** Works after `pod install` (Apple Maps).
+- **Android:** Add your Google Maps key to `android/gradle.properties`:
+
+```properties
+MAPS_API_KEY=your_google_maps_key
+```
+
+Use the same key as **legend-car-rental** if you already have one.
+
+## Quick start
+
+```sh
+npm install
+npm run link:fonts
 npm start
-
-# OR using Yarn
-yarn start
+npm run ios          # or npm run android
 ```
 
-## Step 2: Build and run your app
+## API / network layer
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+Same pattern as the user app: **Axios** + `/Driver/Api/*` endpoints.
 
-### Android
+| Item | Location |
+|------|----------|
+| HTTP client | `src/api/restClient.ts` |
+| Endpoints | `src/api/urls/endpoints.ts` |
+| Services | `src/api/services/*` |
+| Local fallback | `src/api/local/localApiRouter.ts` |
 
-```sh
-# Using npm
-npm run android
+Until the Driver backend is deployed, `USE_LOCAL_API_FALLBACK=true` in `src/config/env.ts` routes requests through the local router (network-shaped responses + delay). Set it to **`false`** to call the real server only.
 
-# OR using Yarn
-yarn android
+```ts
+// src/config/env.ts
+export const USE_LOCAL_API_FALLBACK = true;  // → false for production API
+export const API_BASE_URL_DEFAULT = 'https://admin-portal-stg.legendrentacar.com';
 ```
 
-### iOS
+## Project structure
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+```
+src/
+├── api/
+│   ├── services/       # authService, jobService, handoverService, …
+│   ├── local/          # temporary router until backend live
+│   ├── seed/           # response payloads for local fallback only
+│   ├── mappers/
+│   └── urls/
+├── assets/placeholders/
+├── features/
+├── store/
+└── …
 ```
 
-Then, and every time you update your native dependencies, run:
+## Scripts
 
-```sh
-bundle exec pod install
-```
+| Command | Purpose |
+|---------|---------|
+| `npm run generate:assets` | Regenerate placeholder PNGs |
+| `npm run link:fonts` | Link Inria Serif |
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+## Go live checklist
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+1. Deploy Driver API on staging/production base URL  
+2. Set `USE_LOCAL_API_FALLBACK = false`  
+3. Wire auth token in `src/api/interceptors/requestInterceptor.ts`  
+4. Remove or archive `src/api/seed/` + `src/api/local/` when no longer needed
