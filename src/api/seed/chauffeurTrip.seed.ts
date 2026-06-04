@@ -1,0 +1,50 @@
+import type { ChauffeurTrip } from '@domain/chauffeur.types';
+
+export const CHAUFFEUR_TRIP_SEED: ChauffeurTrip = {
+  trip_id: 'TRIP-3001',
+  job_id: 'JOB-9003',
+  booking_reference: 'LGC-2026-45001',
+  started_at: null,
+  ended_at: null,
+  elapsed_seconds: 0,
+  distance_km: 0,
+  policy_note: 'Chauffeur service only — customer must not self-drive this vehicle.',
+  stops: [
+    {
+      id: 's1',
+      type: 'pickup',
+      label: 'Pickup',
+      address: 'DIFC Gate Avenue, Dubai',
+      latitude: 25.211,
+      longitude: 55.2814,
+      completed: false,
+    },
+    {
+      id: 's2',
+      type: 'stop',
+      label: 'Stop 1',
+      address: 'City Walk, Dubai',
+      latitude: 25.2048,
+      longitude: 55.2603,
+      completed: false,
+    },
+    {
+      id: 's3',
+      type: 'destination',
+      label: 'Destination',
+      address: 'Dubai Mall, Downtown',
+      latitude: 25.1972,
+      longitude: 55.2796,
+      completed: false,
+    },
+    {
+      id: 's4',
+      type: 'drop',
+      label: 'Drop-off',
+      address: 'Dubai Mall, Fountain Views',
+      latitude: 25.1963,
+      longitude: 55.2744,
+      completed: false,
+    },
+  ],
+};

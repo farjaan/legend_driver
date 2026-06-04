@@ -1,0 +1,7 @@
+export * from './jobs.seed';
+export * from './driverProfile.seed';
+export * from './chat.seed';
+export * from './notifications.seed';
+export * from './breakdown.seed';
+export * from './ratingsPenalties.seed';
+export * from './chauffeurTrip.seed';
