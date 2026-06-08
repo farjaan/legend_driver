@@ -163,13 +163,6 @@ export function LoginScreen({ navigation }: Props) {
                 )}
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={() => navigation.navigate('EmployeeLogin')}
-                style={{ alignItems: 'center', marginTop: 12, paddingVertical: 8 }}>
-                <Text style={{ fontFamily: 'InriaSerif-Regular', fontSize: 13, color: theme.textSecondary }}>
-                  {t('auth.loginEmployee')} →
-                </Text>
-              </TouchableOpacity>
             </ScrollView>
           </View>
         </View>

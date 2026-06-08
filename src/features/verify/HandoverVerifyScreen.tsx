@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { OtpCodeInput } from '@components/ui/OtpCodeInput';
 import { useTranslation } from 'react-i18next';
@@ -27,26 +27,57 @@ export function HandoverVerifyScreen({ route, navigation }: Props) {
   const job = useJobStore(s => s.getJob(route.params.jobId));
   const [tab, setTab] = useState<Tab>('otp');
   const [otp, setOtp] = useState('');
-  const [qrPayload, setQrPayload] = useState(`${HANDOVER_QR_PREFIX}${job?.booking_id ?? ''}`);
+  const [qrPayload, setQrPayload] = useState(HANDOVER_QR_PREFIX);
+  const qrEditedRef = useRef(false);
   const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
   const { theme } = useAppTheme();
+
+  useEffect(() => {
+    if (!job?.booking_id) return;
+    if (qrEditedRef.current) return;
+    setQrPayload(`${HANDOVER_QR_PREFIX}${job.booking_id}`);
+  }, [job?.booking_id]);
 
   const verifyOtp = async () => {
     if (!job) return;
     setLoading(true);
-    const res = await handoverService.verifyOtp(job.booking_id, otp);
-    setMessage(res.message);
-    setLoading(false);
-    if (res.success) navigation.goBack();
+    setIsError(false);
+    try {
+      const res = await handoverService.verifyOtp(job.booking_id, otp.trim());
+      setMessage(res.message);
+      setIsError(!res.success);
+      if (res.success) navigation.goBack();
+    } catch {
+      setMessage(t('verify.qrFailed'));
+      setIsError(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const verifyQr = async () => {
+    const normalized = qrPayload.trim().toUpperCase();
+    if (!normalized || normalized.length <= HANDOVER_QR_PREFIX.length) {
+      setMessage(t('verify.qrFailed'));
+      setIsError(true);
+      return;
+    }
+
     setLoading(true);
-    const res = await handoverService.verifyQr(qrPayload);
-    setMessage(res.success ? t('verify.qrSuccess') : t('verify.qrFailed'));
-    setLoading(false);
-    if (res.success) navigation.goBack();
+    setIsError(false);
+    try {
+      const res = await handoverService.verifyQr(normalized);
+      setMessage(res.success ? t('verify.qrSuccess') : t('verify.qrFailed'));
+      setIsError(!res.success);
+      if (res.success) navigation.goBack();
+    } catch {
+      setMessage(t('verify.qrFailed'));
+      setIsError(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -129,7 +160,10 @@ export function HandoverVerifyScreen({ route, navigation }: Props) {
           <FormField
             label={t('verify.qrPayload')}
             value={qrPayload}
-            onChangeText={setQrPayload}
+            onChangeText={text => {
+              qrEditedRef.current = true;
+              setQrPayload(text);
+            }}
             autoCapitalize="characters"
           />
           <PrimaryButton
@@ -137,13 +171,14 @@ export function HandoverVerifyScreen({ route, navigation }: Props) {
             onPress={verifyQr}
             loading={loading}
             variant="outline"
+            disabled={qrPayload.trim().length <= HANDOVER_QR_PREFIX.length}
             style={styles.btn}
           />
         </SectionCard>
       )}
 
       {message ? (
-        <Text style={[styles.msg, message.includes('Invalid') && styles.msgError]}>
+        <Text style={[styles.msg, isError && styles.msgError]}>
           {message}
         </Text>
       ) : null}

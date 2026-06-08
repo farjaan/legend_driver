@@ -87,6 +87,7 @@ android {
         versionName "1.0"
         def mapsKey = project.findProperty('MAPS_API_KEY') ?: System.getenv('MAPS_API_KEY') ?: ''
         manifestPlaceholders = [MAPS_API_KEY: mapsKey]
+        resValue "string", "google_maps_key", mapsKey
     }
     signingConfigs {
         debug {
@@ -113,6 +114,7 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    implementation("com.google.android.gms:play-services-maps:19.1.0")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

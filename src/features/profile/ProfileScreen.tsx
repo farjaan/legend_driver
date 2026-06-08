@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { NetworkImage } from '@components/NetworkImage';
 import { AppIcon } from '@components/icons';
@@ -15,6 +15,7 @@ import { Spacing } from '@constants/layout';
 import { useAppTheme } from '@theme/useAppTheme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ProfileStackParamList } from '@navigation/types';
+import { LogoutConfirmModal } from '@features/profile/components/LogoutConfirmModal';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'ProfileMain'>;
 
@@ -22,11 +23,12 @@ export function ProfileScreen({ navigation }: Props) {
   const tabBarInset = useTabBarInset();
   const profile = useAuthStore(s => s.profile);
   const logout = useAuthStore(s => s.logout);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const { t } = useTranslation();
   const { theme } = useAppTheme();
 
   return (
-    <ScreenScaffold title={t('profile.title')} bottomInset={tabBarInset}>
+    <ScreenScaffold title={t('profile.title')} bottomInset={tabBarInset + Spacing.md}>
       <Pressable
         style={[
           styles.profileCard,
@@ -71,11 +73,17 @@ export function ProfileScreen({ navigation }: Props) {
             onPress: () => navigation.navigate('EditProfile'),
           },
           {
+            id: 'documents',
+            label: t('documents.title'),
+            icon: 'folder-open',
+            onPress: () => navigation.navigate('Documents'),
+          },
+          {
             id: 'vehicles',
             label: t('profile.myVehicles'),
             icon: 'car',
             value: String(profile?.fleet_vehicles?.length ?? 0),
-            onPress: () => navigation.navigate('MyVehicles'),
+            onPress: () => navigation.getParent()?.navigate('VehiclesTab'),
           },
         ]}
       />
@@ -83,6 +91,12 @@ export function ProfileScreen({ navigation }: Props) {
       <MenuSection
         title={t('profile.sectionWork')}
         items={[
+          {
+            id: 'earnings',
+            label: t('earnings.title'),
+            icon: 'wallet',
+            onPress: () => navigation.navigate('Earnings'),
+          },
           {
             id: 'kyc',
             label: t('profile.kycWizard'),
@@ -114,6 +128,12 @@ export function ProfileScreen({ navigation }: Props) {
       <MenuSection
         title={t('profile.sectionSupport')}
         items={[
+          {
+            id: 'support',
+            label: t('support.title'),
+            icon: 'headset',
+            onPress: () => navigation.navigate('SupportTicketList'),
+          },
           {
             id: 'breakdown',
             label: t('profile.breakdown'),
@@ -147,10 +167,20 @@ export function ProfileScreen({ navigation }: Props) {
         ]}
       />
 
-      <Pressable style={styles.logoutBtn} onPress={logout}>
+      <Pressable style={styles.logoutBtn} onPress={() => setLogoutModalVisible(true)}>
         <AppIcon name="sign-out-alt" size={16} color={Colors.danger} />
         <Text style={styles.logoutTxt}>{t('profile.logout')}</Text>
       </Pressable>
+
+      <LogoutConfirmModal
+        visible={logoutModalVisible}
+        driverName={profile?.full_name}
+        onCancel={() => setLogoutModalVisible(false)}
+        onConfirm={() => {
+          setLogoutModalVisible(false);
+          void logout();
+        }}
+      />
     </ScreenScaffold>
   );
 }

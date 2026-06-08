@@ -13,7 +13,9 @@ import { JobMapScreen } from '@features/map/JobMapScreen';
 import { HandoverVerifyScreen } from '@features/verify/HandoverVerifyScreen';
 import { CheckoutWizardScreen } from '@features/handover/CheckoutWizardScreen';
 import { CheckinWizardScreen } from '@features/handover/CheckinWizardScreen';
-import { ChauffeurTripScreen } from '@features/chauffeur/ChauffeurTripScreen';
+import { ChauffeurNavigationScreen } from '@features/chauffeur/ChauffeurNavigationScreen';
+import { ChauffeurStartTripScreen } from '@features/chauffeur/ChauffeurStartTripScreen';
+import { ChauffeurActiveTripScreen } from '@features/chauffeur/ChauffeurActiveTripScreen';
 import { TripSummaryScreen } from '@features/chauffeur/TripSummaryScreen';
 import type { RootStackParamList } from './types';
 
@@ -68,8 +70,18 @@ export function RootNavigator() {
               options={{ headerShown: false }}
             />
             <Stack.Screen
-              name="ChauffeurTrip"
-              component={ChauffeurTripScreen}
+              name="ChauffeurNavigation"
+              component={ChauffeurNavigationScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="ChauffeurStartTrip"
+              component={ChauffeurStartTripScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="ChauffeurActiveTrip"
+              component={ChauffeurActiveTripScreen}
               options={{ headerShown: false }}
             />
             <Stack.Screen

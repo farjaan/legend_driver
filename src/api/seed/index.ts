@@ -5,3 +5,5 @@ export * from './notifications.seed';
 export * from './breakdown.seed';
 export * from './ratingsPenalties.seed';
 export * from './chauffeurTrip.seed';
+export * from './earnings.seed';
+export * from './support.seed';

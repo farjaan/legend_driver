@@ -5,3 +5,5 @@ export * from './chauffeur.types';
 export * from './notification.types';
 export * from './breakdown.types';
 export * from './chat.types';
+export * from './earnings.types';
+export * from './support.types';

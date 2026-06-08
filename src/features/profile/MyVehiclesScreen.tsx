@@ -9,22 +9,24 @@ import { APP_FONTS } from '@constants/appFonts';
 import { Layout, Spacing } from '@constants/layout';
 import { useAppTheme } from '@theme/useAppTheme';
 import type { ThemeTokens } from '@theme/index';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { ProfileStackParamList } from '@navigation/types';
+import { useNavigation } from '@react-navigation/native';
+import { useTabBarInset } from '@hooks/useTabBarInset';
 
-type Props = NativeStackScreenProps<ProfileStackParamList, 'MyVehicles'>;
-
-export function MyVehiclesScreen({ navigation }: Props) {
+export function MyVehiclesScreen() {
+  const navigation = useNavigation();
+  const tabBarInset = useTabBarInset();
   const { t } = useTranslation();
   const { theme } = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const vehicles = useAuthStore(s => s.profile?.fleet_vehicles ?? []);
+  const canGoBack = navigation.canGoBack();
 
   return (
     <ScreenScaffold
       title={t('profile.myVehicles')}
       subtitle={t('profile.myVehiclesSub')}
-      onBack={() => navigation.goBack()}>
+      bottomInset={canGoBack ? undefined : tabBarInset}
+      onBack={canGoBack ? () => navigation.goBack() : undefined}>
       {vehicles.length === 0 ? (
         <Text style={styles.empty}>{t('profile.noVehicles')}</Text>
       ) : (

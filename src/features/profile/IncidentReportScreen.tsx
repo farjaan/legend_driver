@@ -12,6 +12,7 @@ import { APP_FONTS } from '@constants/appFonts';
 import { Layout, Spacing } from '@constants/layout';
 import { useAppTheme } from '@theme/useAppTheme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { incidentService } from '@api/services/incidentService';
 import type { ProfileStackParamList } from '@navigation/types';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'IncidentReport'>;
@@ -33,9 +34,16 @@ export function IncidentReportScreen({ navigation }: Props) {
   const submit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
-    await new Promise<void>(r => setTimeout(r, 650));
-    setSubmitting(false);
-    setSuccess(true);
+    try {
+      await incidentService.submitReport({
+        incident_type: type,
+        description: details.trim(),
+        location: location.trim(),
+      });
+      setSuccess(true);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

@@ -1,14 +1,14 @@
-import React, { useMemo } from 'react';
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Linking, Platform, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { ScreenScaffold } from '@components/ScreenScaffold';
+import { ScreenHeader } from '@components/ScreenHeader';
 import { JobMapView } from '@components/map/JobMapView';
-import { SectionCard } from '@components/ui/SectionCard';
 import { DetailRow } from '@components/ui/DetailRow';
 import { PrimaryButton } from '@components/ui/PrimaryButton';
 import { useJobStore } from '@store/jobStore';
 import { APP_FONTS } from '@constants/appFonts';
 import { useAppTheme } from '@theme/useAppTheme';
+import { requestLocationPermission } from '@utils/requestLocationPermission';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation/types';
 
@@ -17,7 +17,15 @@ type Props = NativeStackScreenProps<RootStackParamList, 'JobMap'>;
 export function JobMapScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
+  const { height: windowHeight } = useWindowDimensions();
   const job = useJobStore(s => s.getJob(route.params.jobId));
+  const [locationGranted, setLocationGranted] = useState(false);
+
+  const mapHeight = Math.max(Math.round(windowHeight * 0.48), 300);
+
+  useEffect(() => {
+    void requestLocationPermission().then(setLocationGranted);
+  }, []);
 
   const pins = useMemo(() => {
     if (!job) return [];
@@ -43,9 +51,14 @@ export function JobMapScreen({ route, navigation }: Props) {
 
   if (!job) {
     return (
-      <ScreenScaffold title={t('jobs.mapPreview')} onBack={() => navigation.goBack()}>
-        <Text style={[styles.notFound, { color: theme.textSecondary }]}>{t('jobs.notFound')}</Text>
-      </ScreenScaffold>
+      <View style={[styles.root, { backgroundColor: theme.screenBackground }]}>
+        <ScreenHeader title={t('jobs.mapPreview')} onBack={() => navigation.goBack()} />
+        <View style={styles.center}>
+          <Text style={[styles.notFound, { color: theme.textSecondary }]}>
+            {t('jobs.notFound')}
+          </Text>
+        </View>
+      </View>
     );
   }
 
@@ -56,24 +69,43 @@ export function JobMapScreen({ route, navigation }: Props) {
   };
 
   return (
-    <ScreenScaffold
-      title={t('jobs.mapPreview')}
-      subtitle={job.booking_reference}
-      onBack={() => navigation.goBack()}>
-      <JobMapView pins={pins} height={300} />
+    <View style={[styles.root, { backgroundColor: theme.screenBackground }]}>
+      <ScreenHeader
+        title={t('jobs.mapPreview')}
+        subtitle={job.booking_reference}
+        onBack={() => navigation.goBack()}
+      />
 
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.dot, styles.dotCustomer]} />
-          <Text style={[styles.legendText, { color: theme.textSecondary }]}>{t('jobs.customerPin')}</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.dot, styles.dotBranch]} />
-          <Text style={[styles.legendText, { color: theme.textSecondary }]}>{t('jobs.branch')}</Text>
-        </View>
+      <View style={[styles.mapContainer, { height: mapHeight }]}>
+        <JobMapView
+          pins={pins}
+          height={mapHeight}
+          showUserLocation={locationGranted}
+        />
       </View>
 
-      <SectionCard title={t('jobs.routeInfo')}>
+      {Platform.OS === 'android' ? (
+        <Text style={[styles.mapHint, { color: theme.textMuted }]}>
+          {locationGranted ? t('map.tilesHint') : t('map.permissionOptional')}
+        </Text>
+      ) : null}
+
+      <View style={[styles.bottomPanel, { backgroundColor: theme.screenBackground, borderTopColor: theme.cardBorder }]}>
+        <View style={styles.legend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.dot, styles.dotCustomer]} />
+            <Text style={[styles.legendText, { color: theme.textSecondary }]}>
+              {t('jobs.customerPin')}
+            </Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.dot, styles.dotBranch]} />
+            <Text style={[styles.legendText, { color: theme.textSecondary }]}>
+              {t('jobs.branch')}
+            </Text>
+          </View>
+        </View>
+
         <DetailRow icon="building" label={t('jobs.branch')} value={job.branch_name} />
         <DetailRow
           icon="map-marker-alt"
@@ -81,17 +113,39 @@ export function JobMapScreen({ route, navigation }: Props) {
           value={job.drop_off_address ?? job.pick_up_address ?? '—'}
           last
         />
-      </SectionCard>
 
-      <PrimaryButton label={t('jobs.openInMaps')} onPress={openMaps} />
-    </ScreenScaffold>
+        <PrimaryButton label={t('jobs.openInMaps')} onPress={openMaps} style={styles.mapsBtn} />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   notFound: {
     fontFamily: APP_FONTS.regular,
     fontSize: 14,
+  },
+  mapContainer: {
+    width: '100%',
+  },
+  mapHint: {
+    fontFamily: APP_FONTS.regular,
+    fontSize: 11,
+    lineHeight: 15,
+    textAlign: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 4,
+  },
+  bottomPanel: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  mapsBtn: {
+    marginTop: 8,
   },
   legend: {
     flexDirection: 'row',

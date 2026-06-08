@@ -6,3 +6,6 @@ export { notificationService } from './notificationService';
 export { breakdownService } from './breakdownService';
 export { chatService } from './chatService';
 export { chauffeurService } from './chauffeurService';
+export { earningsService } from './earningsService';
+export { supportService } from './supportService';
+export { incidentService } from './incidentService';

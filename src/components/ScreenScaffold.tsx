@@ -13,6 +13,8 @@ type Props = {
   bottomInset?: number;
   onBack?: () => void;
   loading?: boolean;
+  compact?: boolean;
+  fill?: boolean;
 };
 
 export function ScreenScaffold({
@@ -23,12 +25,14 @@ export function ScreenScaffold({
   bottomInset = 0,
   onBack,
   loading,
+  compact,
+  fill,
 }: Props) {
   const { theme } = useAppTheme();
 
   return (
     <View style={[styles.root, { backgroundColor: theme.screenBackground }]}>
-      <ScreenHeader title={title} subtitle={subtitle} onBack={onBack} />
+      <ScreenHeader title={title} subtitle={subtitle} onBack={onBack} compact={compact} />
       {loading ? (
         <View style={styles.loader}>
           <ActivityIndicator color={BrandColors.accentOrange} />
@@ -37,7 +41,8 @@ export function ScreenScaffold({
         <ScreenContainer
           scroll={scroll}
           bottomInset={bottomInset}
-          includeTopInset={false}>
+          includeTopInset={false}
+          fill={fill}>
           {children}
         </ScreenContainer>
       )}

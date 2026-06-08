@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { ScreenScaffold } from '@components/ScreenScaffold';
@@ -15,7 +15,12 @@ import { ContactCustomerSheet } from '@features/jobs/components/ContactCustomerS
 import { jobService } from '@api/services/jobService';
 import type { BookingSummary } from '@api/models/booking.models';
 import { useJobStore } from '@store/jobStore';
-import { nextStatus, jobTypeLabel } from '@utils/jobHelpers';
+import { jobTypeLabel, nextStatus } from '@utils/jobHelpers';
+import {
+  chauffeurPrimaryActionKey,
+  isChauffeurJob,
+  navigateChauffeurFlow,
+} from '@utils/chauffeurHelpers';
 import { formatJobSchedule } from '@utils/format';
 import { getVehicleImageProps } from '@utils/vehicleImage';
 import { PlaceholderImages } from '@assets/placeholders';
@@ -37,7 +42,6 @@ export function JobDetailScreen({ navigation, route }: Props) {
   const acceptJob = useJobStore(s => s.acceptJob);
   const rejectJob = useJobStore(s => s.rejectJob);
   const advanceStatus = useJobStore(s => s.advanceStatus);
-
   const [job, setJob] = useState<DriverJob | null>(cachedJob ?? null);
   const [booking, setBooking] = useState<BookingSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,17 +58,32 @@ export function JobDetailScreen({ navigation, route }: Props) {
     });
   }, [jobId]);
 
-  const openMaps = () => {
+  useEffect(() => {
+    const fresh = useJobStore.getState().getJob(jobId);
+    if (fresh) setJob(fresh);
+  }, [jobId, cachedJob?.job_status]);
+
+  const isChauffeur = job ? isChauffeurJob(job) : false;
+  const chauffeurActionKey = job ? chauffeurPrimaryActionKey(job.job_status) : null;
+
+  const handleChauffeurPrimary = () => {
     if (!job) return;
-    void Linking.openURL(
-      `https://www.google.com/maps/dir/?api=1&destination=${job.latitude},${job.longitude}`,
-    );
+    navigateChauffeurFlow(navigation, job);
   };
 
   const advance = () => {
     if (!job) return;
     const next = nextStatus(job.job_status);
     if (next) void advanceStatus(jobId, next);
+  };
+
+  const handleAccept = async () => {
+    await acceptJob(jobId);
+    const updated = useJobStore.getState().getJob(jobId);
+    if (updated) setJob(updated);
+    if (updated && isChauffeurJob(updated)) {
+      navigation.navigate('ChauffeurNavigation', { jobId });
+    }
   };
 
   if (!loading && !job) {
@@ -120,30 +139,55 @@ export function JobDetailScreen({ navigation, route }: Props) {
 
           <JobStatusTimeline current={job.job_status} />
 
-          <SectionCard title={t('jobs.customerSection')}>
-            <DetailRow
-              icon="user"
-              label={t('jobs.customer')}
-              value={job.customer_name}
-            />
-            <DetailRow
-              icon="phone"
-              label={t('jobs.phone')}
-              value={job.customer_phone_masked}
-              onPress={() => setContactSheetVisible(true)}
-            />
-            <DetailRow
-              icon="map-marker-alt"
-              label={t('jobs.location')}
-              value={address}
-            />
-            <DetailRow
-              icon="building"
-              label={t('jobs.branch')}
-              value={job.branch_name}
-              last
-            />
-          </SectionCard>
+          {isChauffeur ? (
+            <SectionCard title={t('chauffeur.rideDetails')}>
+              <DetailRow icon="user" label={t('jobs.customer')} value={job.customer_name} />
+              <DetailRow
+                icon="phone"
+                label={t('jobs.phone')}
+                value={job.customer_phone_masked}
+                onPress={() => setContactSheetVisible(true)}
+              />
+              <DetailRow
+                icon="car"
+                label={t('chauffeur.vehicle')}
+                value={`${job.vehicle.make} ${job.vehicle.model} · ${job.vehicle.plate_number}`}
+              />
+              <DetailRow
+                icon="palette"
+                label={t('chauffeur.vehicleColor')}
+                value={job.vehicle.color}
+              />
+              <DetailRow
+                icon="map-marker-alt"
+                label={t('chauffeur.pickup')}
+                value={job.pick_up_address ?? '—'}
+              />
+              <DetailRow
+                icon="flag-checkered"
+                label={t('chauffeur.dropoff')}
+                value={job.drop_off_address ?? '—'}
+              />
+              <DetailRow
+                icon="clock"
+                label={t('chauffeur.tripTime')}
+                value={formatJobSchedule(job.scheduled_at)}
+                last
+              />
+            </SectionCard>
+          ) : (
+            <SectionCard title={t('jobs.customerSection')}>
+              <DetailRow icon="user" label={t('jobs.customer')} value={job.customer_name} />
+              <DetailRow
+                icon="phone"
+                label={t('jobs.phone')}
+                value={job.customer_phone_masked}
+                onPress={() => setContactSheetVisible(true)}
+              />
+              <DetailRow icon="map-marker-alt" label={t('jobs.location')} value={address} />
+              <DetailRow icon="building" label={t('jobs.branch')} value={job.branch_name} last />
+            </SectionCard>
+          )}
 
           {booking ? (
             <SectionCard title={t('jobs.bookingSection')}>
@@ -181,26 +225,28 @@ export function JobDetailScreen({ navigation, route }: Props) {
           <Text style={styles.actionsTitle}>{t('jobs.actions')}</Text>
           <View style={styles.actionGrid}>
             <ActionTile
-              icon="directions"
-              label={t('jobs.navigate')}
-              onPress={openMaps}
-              accent
+              icon="phone"
+              label={t('contact.call')}
+              onPress={() => setContactSheetVisible(true)}
             />
-            <ActionTile
-              icon="map"
-              label={t('jobs.mapPreview')}
-              onPress={() => navigation.navigate('JobMap', { jobId })}
-            />
-            <ActionTile
-              icon="shield-alt"
-              label={t('verify.otp')}
-              onPress={() => navigation.navigate('HandoverVerify', { jobId })}
-            />
-            {job.job_type === 'chauffeur' ? (
+            {isChauffeur ? (
               <ActionTile
                 icon="route"
-                label={t('chauffeur.startTrip')}
-                onPress={() => navigation.navigate('ChauffeurTrip', { jobId })}
+                label={t('chauffeur.navigationTitle')}
+                onPress={() => navigation.navigate('ChauffeurNavigation', { jobId })}
+              />
+            ) : (
+              <ActionTile
+                icon="map"
+                label={t('jobs.mapPreview')}
+                onPress={() => navigation.navigate('JobMap', { jobId })}
+              />
+            )}
+            {!isChauffeur ? (
+              <ActionTile
+                icon="shield-alt"
+                label={t('verify.otp')}
+                onPress={() => navigation.navigate('HandoverVerify', { jobId })}
               />
             ) : null}
             {job.job_type === 'delivery' || job.job_type === 'pickup' ? (
@@ -222,18 +268,27 @@ export function JobDetailScreen({ navigation, route }: Props) {
           {job.job_status === 'assigned' ? (
             <View style={styles.ctaRow}>
               <PrimaryButton
-                label={t('jobs.accept')}
-                onPress={() => void acceptJob(jobId)}
+                label={isChauffeur ? t('chauffeur.acceptRide') : t('jobs.accept')}
+                onPress={() => void handleAccept()}
                 style={styles.ctaFlex}
               />
               <PrimaryButton
-                label={t('jobs.reject')}
+                label={isChauffeur ? t('chauffeur.rejectRide') : t('jobs.reject')}
                 variant="danger"
                 onPress={() => setRejectModalVisible(true)}
                 style={styles.ctaFlex}
               />
             </View>
-          ) : job.job_status !== 'completed' && job.job_status !== 'rejected' ? (
+          ) : chauffeurActionKey ? (
+            <PrimaryButton
+              label={t(chauffeurActionKey)}
+              onPress={handleChauffeurPrimary}
+              style={styles.ctaSingle}
+            />
+          ) : !isChauffeur &&
+            job.job_status !== 'completed' &&
+            job.job_status !== 'rejected' &&
+            job.job_status !== 'cancelled' ? (
             <PrimaryButton
               label={t('jobs.advanceStatus')}
               onPress={advance}

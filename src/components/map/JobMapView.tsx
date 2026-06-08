@@ -1,34 +1,57 @@
 import React, { useMemo, useRef } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
+import { Platform, StyleSheet, View, type ViewStyle } from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 import { DEFAULT_MAP_REGION } from '@config/env';
 import { Layout } from '@constants/layout';
 import { useAppTheme } from '@theme/useAppTheme';
 
-type MapPin = {
+export type MapPinVariant = 'customer' | 'branch' | 'pickup' | 'drop';
+
+export type MapPin = {
   id: string;
   latitude: number;
   longitude: number;
   title: string;
   description?: string;
-  variant: 'customer' | 'branch';
+  variant: MapPinVariant;
 };
+
+type Coord = { latitude: number; longitude: number };
 
 type Props = {
   pins: MapPin[];
+  routeCoordinates?: Coord[];
   height?: number;
+  fullScreen?: boolean;
+  showUserLocation?: boolean;
+  style?: ViewStyle;
 };
 
-export function JobMapView({ pins, height = 280 }: Props) {
+const PIN_COLORS: Record<MapPinVariant, string> = {
+  customer: '#F08900',
+  branch: '#2C1B47',
+  pickup: '#16A34A',
+  drop: '#DC2626',
+};
+
+export function JobMapView({
+  pins,
+  routeCoordinates,
+  height,
+  fullScreen = false,
+  showUserLocation = false,
+  style,
+}: Props) {
   const { theme } = useAppTheme();
   const mapRef = useRef<MapView>(null);
 
   const region = useMemo((): Region => {
-    if (pins.length === 0) {
+    const all = [...pins, ...(routeCoordinates ?? [])];
+    if (all.length === 0) {
       return { ...DEFAULT_MAP_REGION };
     }
-    if (pins.length === 1) {
-      const p = pins[0];
+    if (all.length === 1) {
+      const p = all[0];
       return {
         latitude: p.latitude,
         longitude: p.longitude,
@@ -36,8 +59,8 @@ export function JobMapView({ pins, height = 280 }: Props) {
         longitudeDelta: 0.06,
       };
     }
-    const lats = pins.map(p => p.latitude);
-    const lngs = pins.map(p => p.longitude);
+    const lats = all.map(p => p.latitude);
+    const lngs = all.map(p => p.longitude);
     const minLat = Math.min(...lats);
     const maxLat = Math.max(...lats);
     const minLng = Math.min(...lngs);
@@ -50,37 +73,54 @@ export function JobMapView({ pins, height = 280 }: Props) {
       latitudeDelta: latDelta,
       longitudeDelta: lngDelta,
     };
-  }, [pins]);
+  }, [pins, routeCoordinates]);
 
   const onMapReady = () => {
-    if (pins.length < 2 || !mapRef.current) return;
-    mapRef.current.fitToCoordinates(
-      pins.map(p => ({ latitude: p.latitude, longitude: p.longitude })),
-      {
-        edgePadding: { top: 48, right: 48, bottom: 48, left: 48 },
-        animated: true,
-      },
-    );
+    const coords = routeCoordinates?.length
+      ? routeCoordinates
+      : pins.map(p => ({ latitude: p.latitude, longitude: p.longitude }));
+    if (coords.length < 2 || !mapRef.current) return;
+    mapRef.current.fitToCoordinates(coords, {
+      edgePadding: { top: 80, right: 48, bottom: 200, left: 48 },
+      animated: true,
+    });
   };
 
   return (
-    <View style={[styles.wrap, { height, borderColor: theme.cardBorder }]}>
+    <View
+      style={[
+        styles.wrap,
+        fullScreen ? styles.wrapFullScreen : styles.wrapCard,
+        height ? { height } : styles.wrapFlex,
+        !fullScreen && { borderColor: theme.cardBorder },
+        style,
+      ]}>
       <MapView
         ref={mapRef}
         style={styles.map}
         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         initialRegion={region}
         onMapReady={onMapReady}
-        showsUserLocation
-        showsMyLocationButton={Platform.OS === 'android'}
+        loadingEnabled
+        mapType="standard"
+        showsUserLocation={showUserLocation}
+        showsMyLocationButton={showUserLocation && Platform.OS === 'android'}
         toolbarEnabled={false}>
+        {routeCoordinates && routeCoordinates.length > 1 ? (
+          <Polyline
+            coordinates={routeCoordinates}
+            strokeColor="#F08900"
+            strokeWidth={4}
+            lineDashPattern={Platform.OS === 'ios' ? undefined : [0]}
+          />
+        ) : null}
         {pins.map(pin => (
           <Marker
             key={pin.id}
             coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
             title={pin.title}
             description={pin.description}
-            pinColor={pin.variant === 'customer' ? '#F08900' : '#2C1B47'}
+            pinColor={PIN_COLORS[pin.variant]}
           />
         ))}
       </MapView>
@@ -90,9 +130,19 @@ export function JobMapView({ pins, height = 280 }: Props) {
 
 const styles = StyleSheet.create({
   wrap: {
+    minHeight: 200,
+  },
+  wrapCard: {
     borderRadius: Layout.cardRadius,
     overflow: 'hidden',
     borderWidth: 1,
+  },
+  wrapFullScreen: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  wrapFlex: {
+    flex: 1,
   },
   map: {
     width: '100%',

@@ -9,6 +9,7 @@ import { NetworkImage } from '@components/NetworkImage';
 import { PlaceholderImages } from '@assets/placeholders';
 import { useAuthStore } from '@store/authStore';
 import { profileService } from '@api/services/profileService';
+import { usePhotoPicker } from '@hooks/usePhotoPicker';
 import { BrandColors } from '@constants/colors';
 import { APP_FONTS } from '@constants/appFonts';
 import { Layout, Spacing } from '@constants/layout';
@@ -32,6 +33,13 @@ export function EditProfileScreen({ navigation }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  const { image: avatarImage, promptPick: promptChangePhoto } = usePhotoPicker({
+    t,
+    cameraType: 'front',
+  });
+
+  const displayAvatarUri = avatarImage?.uri ?? profile?.avatar_uri;
+
   const save = async () => {
     setSaving(true);
     setSaved(false);
@@ -40,6 +48,7 @@ export function EditProfileScreen({ navigation }: Props) {
         full_name: fullName.trim(),
         email: email.trim(),
         phone: phone.trim(),
+        ...(avatarImage ? { avatar_uri: avatarImage.uri } : {}),
       });
       updateProfile(updated);
       setSaved(true);
@@ -55,12 +64,16 @@ export function EditProfileScreen({ navigation }: Props) {
       subtitle={t('profile.editProfileSub')}
       onBack={() => navigation.goBack()}>
       <View style={styles.avatarRow}>
-        <NetworkImage
-          uri={profile?.avatar_uri}
-          localSource={profile?.avatar_source ?? PlaceholderImages.driverAvatar}
-          style={styles.avatar}
-          resizeMode="cover"
-        />
+        <TouchableOpacity onPress={promptChangePhoto} activeOpacity={0.85}>
+          <NetworkImage
+            uri={displayAvatarUri}
+            localSource={
+              displayAvatarUri ? undefined : (profile?.avatar_source ?? PlaceholderImages.driverAvatar)
+            }
+            style={styles.avatar}
+            resizeMode="cover"
+          />
+        </TouchableOpacity>
         <View style={styles.avatarMeta}>
           <Text style={styles.employeeId}>{profile?.employee_id}</Text>
           <StatusPill
@@ -99,7 +112,7 @@ export function EditProfileScreen({ navigation }: Props) {
         style={styles.saveBtn}
       />
 
-      <TouchableOpacity style={styles.changePhoto} activeOpacity={0.8}>
+      <TouchableOpacity style={styles.changePhoto} activeOpacity={0.8} onPress={promptChangePhoto}>
         <Text style={styles.changePhotoTxt}>{t('profile.changePhoto')}</Text>
       </TouchableOpacity>
     </ScreenScaffold>

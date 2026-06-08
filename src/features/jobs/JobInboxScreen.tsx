@@ -11,11 +11,24 @@ import { useJobStore } from '@store/jobStore';
 import { useTabBarInset } from '@hooks/useTabBarInset';
 import { Colors } from '@constants/colors';
 import { APP_FONTS } from '@constants/appFonts';
+import { Spacing } from '@constants/layout';
 import { useAppTheme } from '@theme/useAppTheme';
-import type { JobType } from '@domain/job.types';
+import type { JobStatus } from '@domain/job.types';
 import { useRootNavigation } from '@hooks/useRootNavigation';
 
-type Filter = 'all' | JobType;
+type TabFilter = 'pending' | 'active' | 'completed' | 'cancelled';
+
+const PENDING: JobStatus[] = ['assigned'];
+const ACTIVE: JobStatus[] = ['accepted', 'en_route', 'arrived', 'handover_in_progress'];
+const COMPLETED: JobStatus[] = ['completed'];
+const CANCELLED: JobStatus[] = ['cancelled', 'rejected'];
+
+function matchesTab(status: JobStatus, tab: TabFilter): boolean {
+  if (tab === 'pending') return PENDING.includes(status);
+  if (tab === 'active') return ACTIVE.includes(status);
+  if (tab === 'completed') return COMPLETED.includes(status);
+  return CANCELLED.includes(status);
+}
 
 export function JobInboxScreen() {
   const navigation = useRootNavigation();
@@ -26,24 +39,23 @@ export function JobInboxScreen() {
   const isLoading = useJobStore(s => s.isLoading);
   const error = useJobStore(s => s.error);
   const fetchJobs = useJobStore(s => s.fetchJobs);
-  const [filter, setFilter] = useState<Filter>('all');
+  const [filter, setFilter] = useState<TabFilter>('pending');
 
   useEffect(() => {
     void fetchJobs();
   }, [fetchJobs]);
 
-  const filtered = useMemo(() => {
-    if (filter === 'all') return jobs.filter(j => j.job_status !== 'rejected');
-    return jobs.filter(j => j.job_type === filter && j.job_status !== 'rejected');
-  }, [jobs, filter]);
+  const filtered = useMemo(
+    () => jobs.filter(j => matchesTab(j.job_status, filter)),
+    [jobs, filter],
+  );
 
   const filters = useMemo(
     () => [
-      { key: 'all', label: t('jobs.all') },
-      { key: 'delivery', label: t('jobs.filterDelivery') },
-      { key: 'pickup', label: t('jobs.filterPickup') },
-      { key: 'return_collection', label: t('jobs.filterReturn') },
-      { key: 'chauffeur', label: t('jobs.filterChauffeur') },
+      { key: 'pending', label: t('jobs.tabPending') },
+      { key: 'active', label: t('jobs.tabActive') },
+      { key: 'completed', label: t('jobs.tabCompleted') },
+      { key: 'cancelled', label: t('jobs.tabCancelled') },
     ],
     [t],
   );
@@ -55,8 +67,10 @@ export function JobInboxScreen() {
       title={t('jobs.inbox')}
       subtitle={t('jobs.inboxSub')}
       bottomInset={tabBarInset}
-      loading={isLoading}>
-      <FilterChipRow chips={filters} selected={filter} onSelect={k => setFilter(k as Filter)} />
+      loading={isLoading}
+      compact
+      fill={!isLoading && filtered.length === 0}>
+      <FilterChipRow chips={filters} selected={filter} onSelect={k => setFilter(k as TabFilter)} />
 
       {!isLoading && jobCount > 0 ? (
         <Text style={[styles.count, { color: theme.textSecondary }]}>
@@ -90,8 +104,8 @@ const styles = StyleSheet.create({
     fontFamily: APP_FONTS.regular,
     fontSize: 12,
     lineHeight: 16,
-    marginBottom: 8,
-    marginTop: -4,
+    marginBottom: Spacing.sm,
+    marginTop: 0,
   },
   error: {
     fontFamily: APP_FONTS.regular,

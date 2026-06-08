@@ -23,6 +23,7 @@ export const DriverEndpoints = {
   },
   CHAUFFEUR: {
     TRIP_DETAIL: '/Driver/Api/fetchChauffeurTrip',
+    ARRIVE: '/Driver/Api/arriveChauffeurPickup',
     START: '/Driver/Api/startChauffeurTrip',
     END: '/Driver/Api/endChauffeurTrip',
   },
@@ -31,6 +32,7 @@ export const DriverEndpoints = {
     UPDATE: '/Driver/Api/updateBreakdownTicket',
   },
   CHAT: {
+    THREADS: '/Driver/Api/fetchChatThreads',
     DISPATCH_MESSAGES: '/Driver/Api/fetchDispatchChat',
     SEND_DISPATCH: '/Driver/Api/sendDispatchMessage',
   },
@@ -43,5 +45,16 @@ export const DriverEndpoints = {
   },
   NOTIFICATIONS: {
     LIST: '/Driver/Api/fetchDriverNotifications',
+  },
+  EARNINGS: {
+    SUMMARY: '/Driver/Api/fetchDriverEarnings',
+  },
+  SUPPORT: {
+    LIST: '/Driver/Api/fetchSupportTickets',
+    CREATE: '/Driver/Api/createSupportTicket',
+    REPLY: '/Driver/Api/replySupportTicket',
+  },
+  INCIDENT: {
+    SUBMIT: '/Driver/Api/submitIncidentReport',
   },
 } as const;

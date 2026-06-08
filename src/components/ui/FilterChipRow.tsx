@@ -20,6 +20,7 @@ export function FilterChipRow({ chips, selected, onSelect }: Props) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      style={styles.scroll}
       contentContainerStyle={styles.row}>
       {chips.map(chip => {
         const active = chip.key === selected;
@@ -47,11 +48,16 @@ export function FilterChipRow({ chips, selected, onSelect }: Props) {
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flexGrow: 0,
+    maxHeight: Layout.chipHeight + Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    paddingBottom: Spacing.md,
+    paddingRight: Spacing.xs,
   },
   chip: {
     height: Layout.chipHeight,

@@ -23,4 +23,12 @@ export const authService = {
       DriverEndpoints.AUTH.LOGIN_EMPLOYEE,
       payload,
     ),
+
+  fetchProfile: () =>
+    post<ApiResponse<{ profile: AuthSessionResponse['profile'] }>>(
+      DriverEndpoints.AUTH.PROFILE,
+      {},
+    ),
+
+  logout: () => post<ApiResponse<{ logged_out: boolean }>>(DriverEndpoints.AUTH.LOGOUT, {}),
 };

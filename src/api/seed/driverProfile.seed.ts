@@ -7,8 +7,15 @@ export const DRIVER_PROFILE_SEED: DriverProfile = {
   full_name: 'Ahmed Al Mansoori',
   phone: '+971501234567',
   email: 'ahmed.mansoori@legendrent.internal',
+  license_number: 'DL-UAE-882104',
   kyc_status: 'approved',
   license_expiry: '2026-11-15',
+  documents: {
+    driving_license: 'uploaded',
+    national_id: 'uploaded',
+    employee_id: 'uploaded',
+    insurance: 'pending',
+  },
   fleet_vehicles: [
     {
       vehicle_id: 'VH-8821',

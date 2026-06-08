@@ -1,4 +1,38 @@
-import type { ChatMessage } from '@domain/chat.types';
+import type { ChatMessage, ChatThread } from '@domain/chat.types';
+
+export const CHAT_THREADS_SEED: ChatThread[] = [
+  {
+    id: 'dispatch',
+    type: 'dispatch',
+    title: 'Dispatch',
+    subtitle: 'Operations team',
+    last_message:
+      'Customer on LGC-2026-44821 requested call 10 min before arrival.',
+    last_message_at: '2026-05-26T13:40:00+04:00',
+    unread_count: 1,
+    icon: 'headset',
+  },
+  {
+    id: 'support',
+    type: 'support',
+    title: 'Driver Support',
+    subtitle: 'Help desk',
+    last_message: 'Your roadside assistance ticket has been assigned.',
+    last_message_at: '2026-05-25T16:20:00+04:00',
+    unread_count: 0,
+    icon: 'life-ring',
+  },
+  {
+    id: 'fleet',
+    type: 'fleet',
+    title: 'Fleet Manager',
+    subtitle: 'Vehicle & compliance',
+    last_message: 'Please upload updated registration for VEH-204.',
+    last_message_at: '2026-05-24T09:15:00+04:00',
+    unread_count: 2,
+    icon: 'car',
+  },
+];
 
 export const DISPATCH_CHAT_SEED: ChatMessage[] = [
   {

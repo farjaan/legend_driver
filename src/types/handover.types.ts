@@ -1,6 +1,7 @@
 export interface CarPhotoPayload {
   image: string;
   local_source?: number;
+  uri?: string;
 }
 
 export interface CheckInDamage {

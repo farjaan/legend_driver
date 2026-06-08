@@ -13,9 +13,22 @@ export const createHomeStyles = (theme: ThemeTokens) =>
     scroll: {
       paddingHorizontal: Spacing.lg,
     },
-    header: {
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       paddingTop: Spacing.sm,
       paddingBottom: Spacing.md,
+    },
+    header: {
+      flex: 1,
+    },
+    avatar: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      borderWidth: 2,
+      borderColor: BrandColors.accentOrange,
     },
     greeting: {
       fontFamily: APP_FONTS.regular,
@@ -90,9 +103,10 @@ export const createHomeStyles = (theme: ThemeTokens) =>
     },
     statCard: {
       flex: 1,
+      minWidth: '22%',
       backgroundColor: theme.surface,
       borderRadius: Layout.cardRadius,
-      padding: Spacing.md,
+      padding: Spacing.sm,
       borderWidth: 1,
       borderColor: theme.cardBorder,
       alignItems: 'center',
@@ -100,19 +114,68 @@ export const createHomeStyles = (theme: ThemeTokens) =>
     },
     statValue: {
       fontFamily: APP_FONTS.bold,
-      fontSize: 20,
+      fontSize: 16,
       color: theme.text,
-      lineHeight: 24,
-      marginTop: Spacing.sm,
+      lineHeight: 20,
+      marginTop: Spacing.xs,
       textAlign: 'center',
     },
     statLabel: {
       fontFamily: APP_FONTS.regular,
-      fontSize: 11,
+      fontSize: 9,
       color: theme.textSecondary,
-      lineHeight: 14,
+      lineHeight: 12,
       marginTop: 1,
       textAlign: 'center',
+    },
+    assignmentCard: {
+      borderRadius: Layout.cardRadius,
+      padding: Spacing.md,
+      marginBottom: Spacing.md,
+      borderWidth: 1,
+    },
+    assignmentTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: Spacing.sm,
+    },
+    assignmentRef: {
+      fontFamily: APP_FONTS.bold,
+      fontSize: 15,
+    },
+    assignmentCustomer: {
+      fontFamily: APP_FONTS.regular,
+      fontSize: 14,
+    },
+    assignmentVehicle: {
+      fontFamily: APP_FONTS.regular,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    assignmentTime: {
+      fontFamily: APP_FONTS.bold,
+      fontSize: 12,
+      color: BrandColors.accentOrange,
+      marginTop: Spacing.sm,
+    },
+    assignmentActions: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+      marginTop: Spacing.md,
+    },
+    assignmentBtn: { flex: 1 },
+    upcomingBtn: {
+      flex: 1,
+      height: 46,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    upcomingBtnText: {
+      fontFamily: APP_FONTS.bold,
+      fontSize: 13,
     },
     earningsNote: {
       fontFamily: APP_FONTS.regular,

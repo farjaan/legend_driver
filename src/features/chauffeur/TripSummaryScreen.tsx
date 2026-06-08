@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ScreenScaffold } from '@components/ScreenScaffold';
@@ -6,11 +6,13 @@ import { SectionCard } from '@components/ui/SectionCard';
 import { DetailRow } from '@components/ui/DetailRow';
 import { PrimaryButton } from '@components/ui/PrimaryButton';
 import { AppIcon } from '@components/icons';
+import { chauffeurService } from '@api/services/chauffeurService';
 import { BrandColors, Colors } from '@constants/colors';
 import { APP_FONTS } from '@constants/appFonts';
 import { Layout, Spacing } from '@constants/layout';
 import { useAppTheme } from '@theme/useAppTheme';
 import { formatElapsed } from '@utils/format';
+import type { ChauffeurTrip } from '@domain/chauffeur.types';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation/types';
 
@@ -20,56 +22,81 @@ export function TripSummaryScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
   const { jobId } = route.params;
+  const [trip, setTrip] = useState<ChauffeurTrip | null>(null);
+  const [stopsCompleted, setStopsCompleted] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const distanceKm = 12.4;
-  const elapsedSeconds = 5220;
-  const stopsCompleted = 2;
-  const bookingRef = `LGC-2026-${jobId.slice(-5)}`;
+  useEffect(() => {
+    void chauffeurService.fetchTrip(jobId).then(data => {
+      setTrip(data);
+      setStopsCompleted(data.stops.filter(s => s.completed).length);
+      setLoading(false);
+    });
+  }, [jobId]);
 
   return (
     <ScreenScaffold
       title={t('chauffeur.tripSummaryTitle')}
-      subtitle={bookingRef}
-      onBack={() => navigation.goBack()}>
+      subtitle={trip?.booking_reference}
+      onBack={() => navigation.goBack()}
+      loading={loading}>
+      {trip ? (
+        <>
+          <View style={[styles.banner, { backgroundColor: BrandColors.brandDeep }]}>
+            <View style={styles.bannerIcon}>
+              <AppIcon name="flag-checkered" size={28} color={BrandColors.accentOrange} solid />
+            </View>
+            <Text style={styles.bannerTitle}>{t('chauffeur.tripComplete')}</Text>
+            <Text style={styles.bannerSub}>{trip.customer_name}</Text>
+          </View>
 
-      {/* Completion banner */}
-      <View style={[styles.banner, { backgroundColor: BrandColors.brandDeep }]}>
-        <View style={styles.bannerIcon}>
-          <AppIcon name="flag-checkered" size={28} color={BrandColors.accentOrange} solid />
-        </View>
-        <Text style={styles.bannerTitle}>{t('chauffeur.tripComplete')}</Text>
-        <Text style={styles.bannerSub}>{bookingRef}</Text>
-      </View>
+          <View style={styles.statsRow}>
+            <View style={[styles.statBox, { backgroundColor: theme.surface, borderColor: theme.cardBorder }]}>
+              <AppIcon name="route" size={16} color={BrandColors.accentOrange} solid />
+              <Text style={[styles.statValue, { color: theme.text }]}>
+                {trip.distance_km.toFixed(1)} km
+              </Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
+                {t('chauffeur.totalDistance')}
+              </Text>
+            </View>
+            <View style={[styles.statBox, { backgroundColor: theme.surface, borderColor: theme.cardBorder }]}>
+              <AppIcon name="clock" size={16} color={BrandColors.accentOrange} solid />
+              <Text style={[styles.statValue, { color: theme.text }]}>
+                {formatElapsed(trip.elapsed_seconds)}
+              </Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
+                {t('chauffeur.totalDuration')}
+              </Text>
+            </View>
+            <View style={[styles.statBox, { backgroundColor: theme.surface, borderColor: theme.cardBorder }]}>
+              <AppIcon name="map-marker-alt" size={16} color={BrandColors.accentOrange} solid />
+              <Text style={[styles.statValue, { color: theme.text }]}>{stopsCompleted}</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
+                {t('chauffeur.stopsCompleted')}
+              </Text>
+            </View>
+          </View>
 
-      {/* Stats row */}
-      <View style={styles.statsRow}>
-        <View style={[styles.statBox, { backgroundColor: theme.surface, borderColor: theme.cardBorder }]}>
-          <AppIcon name="route" size={16} color={BrandColors.accentOrange} solid />
-          <Text style={[styles.statValue, { color: theme.text }]}>{distanceKm.toFixed(1)} km</Text>
-          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{t('chauffeur.totalDistance')}</Text>
-        </View>
-        <View style={[styles.statBox, { backgroundColor: theme.surface, borderColor: theme.cardBorder }]}>
-          <AppIcon name="clock" size={16} color={BrandColors.accentOrange} solid />
-          <Text style={[styles.statValue, { color: theme.text }]}>{formatElapsed(elapsedSeconds)}</Text>
-          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{t('chauffeur.totalDuration')}</Text>
-        </View>
-        <View style={[styles.statBox, { backgroundColor: theme.surface, borderColor: theme.cardBorder }]}>
-          <AppIcon name="map-marker-alt" size={16} color={BrandColors.accentOrange} solid />
-          <Text style={[styles.statValue, { color: theme.text }]}>{stopsCompleted}</Text>
-          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{t('chauffeur.stopsCompleted')}</Text>
-        </View>
-      </View>
+          <SectionCard title={t('chauffeur.stops')}>
+            {trip.stops.map((stop, index) => (
+              <DetailRow
+                key={stop.id}
+                icon="map-marker-alt"
+                label={`${index + 1}. ${stop.label}`}
+                value={stop.address}
+                last={index === trip.stops.length - 1}
+              />
+            ))}
+          </SectionCard>
 
-      <SectionCard title={t('chauffeur.stops')}>
-        <DetailRow icon="map-marker-alt" label="Stop 1" value="Dubai Marina — Pick-up" />
-        <DetailRow icon="map-marker-alt" label="Stop 2" value="Downtown Dubai — Drop" last />
-      </SectionCard>
-
-      <PrimaryButton
-        label={t('chauffeur.closeSummary')}
-        onPress={() => navigation.popToTop()}
-        style={styles.doneBtn}
-      />
+          <PrimaryButton
+            label={t('chauffeur.closeSummary')}
+            onPress={() => navigation.popToTop()}
+            style={styles.doneBtn}
+          />
+        </>
+      ) : null}
     </ScreenScaffold>
   );
 }

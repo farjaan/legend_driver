@@ -9,16 +9,18 @@ import {
   getDriverTabBarColors,
 } from './DriverCenterTabBar.styles';
 
-export type DriverTabKey = 'home' | 'chat' | 'jobs' | 'profile';
+export type DriverTabKey = 'home' | 'vehicles' | 'chat' | 'jobs' | 'profile';
 
 export type DriverCenterTabBarProps = {
   activeTab: DriverTabKey | null;
   translateY?: Animated.Value;
   homeLabel: string;
+  vehiclesLabel: string;
   chatLabel: string;
   jobsLabel: string;
   profileLabel: string;
   onHomePress: () => void;
+  onVehiclesPress: () => void;
   onChatPress: () => void;
   onJobsPress: () => void;
   onProfilePress: () => void;
@@ -28,10 +30,12 @@ export function DriverCenterTabBar({
   activeTab,
   translateY,
   homeLabel,
+  vehiclesLabel,
   chatLabel,
   jobsLabel,
   profileLabel,
   onHomePress,
+  onVehiclesPress,
   onChatPress,
   onJobsPress,
   onProfilePress,
@@ -67,7 +71,12 @@ export function DriverCenterTabBar({
   };
 
   const jobsFocused = activeTab === 'jobs';
-  const leftTabs = <>{renderTab('home', homeLabel, 'home', onHomePress)}</>;
+  const leftTabs = (
+    <>
+      {renderTab('home', homeLabel, 'home', onHomePress)}
+      {renderTab('vehicles', vehiclesLabel, 'car', onVehiclesPress)}
+    </>
+  );
   const rightTabs = (
     <>
       {renderTab('chat', chatLabel, 'comment-dots', onChatPress)}

@@ -102,7 +102,7 @@ export function createDriverCenterTabBarStyles(theme: ThemeTokens) {
       shadowColor: BrandColors.brandDeep,
     },
     fabLabel: {
-      marginTop: 30,
+      marginTop: 35,
       fontSize: 10,
       fontFamily: APP_FONTS.bold,
       color: BrandColors.accentOrange,

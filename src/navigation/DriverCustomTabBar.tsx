@@ -1,15 +1,32 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { DriverTabBar, type DriverTabKey } from '@components/DriverTabBar';
+import {
+  DriverCenterTabBar,
+  type DriverTabKey,
+} from '@components/DriverCenterTabBar';
 import { useTranslation } from 'react-i18next';
 
-type TabRouteName = 'HomeTab' | 'JobsTab' | 'ChatTab' | 'ProfileTab';
+type TabRouteName =
+  | 'HomeTab'
+  | 'VehiclesTab'
+  | 'ChatTab'
+  | 'JobsTab'
+  | 'ProfileTab';
 
 const ROUTE_TO_TAB: Record<TabRouteName, DriverTabKey> = {
   HomeTab: 'home',
-  JobsTab: 'jobs',
+  VehiclesTab: 'vehicles',
   ChatTab: 'chat',
+  JobsTab: 'jobs',
   ProfileTab: 'profile',
+};
+
+const TAB_ROOT_SCREEN: Record<TabRouteName, string> = {
+  HomeTab: 'HomeMain',
+  VehiclesTab: 'MyVehicles',
+  ChatTab: 'ChatList',
+  JobsTab: 'JobInbox',
+  ProfileTab: 'ProfileMain',
 };
 
 export function DriverCustomTabBar({ state, navigation }: BottomTabBarProps) {
@@ -19,17 +36,7 @@ export function DriverCustomTabBar({ state, navigation }: BottomTabBarProps) {
   const activeTab =
     activeRoute && activeRoute in ROUTE_TO_TAB ? ROUTE_TO_TAB[activeRoute] : null;
 
-  const tabs = useMemo(
-    () => [
-      { key: 'home' as const, label: t('tabs.home'), icon: 'home' },
-      { key: 'jobs' as const, label: t('tabs.jobs'), icon: 'clipboard-list' },
-      { key: 'chat' as const, label: t('tabs.chat'), icon: 'comment-dots' },
-      { key: 'profile' as const, label: t('tabs.profile'), icon: 'user' },
-    ],
-    [t],
-  );
-
-  const onPress = (key: DriverTabKey) => {
+  const navigateToTab = (key: DriverTabKey) => {
     const routeName = (Object.keys(ROUTE_TO_TAB) as TabRouteName[]).find(
       r => ROUTE_TO_TAB[r] === key,
     );
@@ -42,10 +49,24 @@ export function DriverCustomTabBar({ state, navigation }: BottomTabBarProps) {
       target: route.key,
       canPreventDefault: true,
     });
-    if (state.index !== idx && !event.defaultPrevented) {
-      navigation.navigate(route.name);
-    }
+    if (event.defaultPrevented) return;
+
+    navigation.navigate(routeName, { screen: TAB_ROOT_SCREEN[routeName] });
   };
 
-  return <DriverTabBar activeTab={activeTab} tabs={tabs} onPress={onPress} />;
+  return (
+    <DriverCenterTabBar
+      activeTab={activeTab}
+      homeLabel={t('tabs.home')}
+      vehiclesLabel={t('tabs.vehicles')}
+      chatLabel={t('tabs.chat')}
+      jobsLabel={t('tabs.jobs')}
+      profileLabel={t('tabs.profile')}
+      onHomePress={() => navigateToTab('home')}
+      onVehiclesPress={() => navigateToTab('vehicles')}
+      onChatPress={() => navigateToTab('chat')}
+      onJobsPress={() => navigateToTab('jobs')}
+      onProfilePress={() => navigateToTab('profile')}
+    />
+  );
 }

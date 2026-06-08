@@ -13,23 +13,25 @@ import { BrandColors } from '@constants/colors';
 import { APP_FONTS } from '@constants/appFonts';
 import { jobService } from '@api/services/jobService';
 import { useJobStore } from '@store/jobStore';
+import { useAuthStore } from '@store/authStore';
 import { useSplashAnimation } from './useSplashAnimation';
 
 const MIN_SPLASH_MS = 2600;
+const APP_VERSION = '0.0.1';
 
 type Props = {
-  onReady: () => void;
+  onReady: (isAuthenticated: boolean) => void;
 };
 
 export function SplashScreen({ onReady }: Props) {
   const { width } = useWindowDimensions();
   const fetchJobs = useJobStore(s => s.fetchJobs);
-  const [statusText, setStatusText] = useState('Loading assignments…');
+  const restoreSession = useAuthStore(s => s.restoreSession);
+  const [statusText, setStatusText] = useState('Loading…');
   const {
     logoOpacity,
     logoScale,
     logoY,
-    taglineOpacity,
     ringScale,
     ringOpacity,
     barWidth,
@@ -45,11 +47,18 @@ export function SplashScreen({ onReady }: Props) {
 
     async function bootstrap() {
       const started = Date.now();
+      let isAuthenticated = false;
+
       try {
-        setStatusText('Syncing jobs & bookings…');
-        const jobs = await jobService.fetchJobList();
-        if (!cancelled) {
-          useJobStore.setState({ jobs, isLoading: false, error: null });
+        setStatusText('Checking session…');
+        isAuthenticated = await restoreSession();
+
+        if (isAuthenticated) {
+          setStatusText('Syncing jobs & bookings…');
+          const jobs = await jobService.fetchJobList();
+          if (!cancelled) {
+            useJobStore.setState({ jobs, isLoading: false, error: null });
+          }
         }
       } catch {
         if (!cancelled) {
@@ -65,14 +74,14 @@ export function SplashScreen({ onReady }: Props) {
         });
       }
 
-      if (!cancelled) onReady();
+      if (!cancelled) onReady(isAuthenticated);
     }
 
     void bootstrap();
     return () => {
       cancelled = true;
     };
-  }, [fetchJobs, onReady]);
+  }, [fetchJobs, onReady, restoreSession]);
 
   return (
     <View style={styles.root}>
@@ -110,9 +119,7 @@ export function SplashScreen({ onReady }: Props) {
         </View>
         <Text style={styles.brand}>LEGEND</Text>
         <Text style={styles.brandSub}>DRIVER</Text>
-        <Animated.Text style={[styles.tagline, { opacity: taglineOpacity }]}>
-          Field operations · UAE fleet
-        </Animated.Text>
+        <Text style={styles.version}>v{APP_VERSION}</Text>
       </Animated.View>
 
       <View style={styles.footer}>
@@ -174,11 +181,12 @@ const styles = StyleSheet.create({
     color: BrandColors.accentOrange,
     marginTop: 4,
   },
-  tagline: {
+  version: {
     fontFamily: APP_FONTS.regular,
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.75)',
-    marginTop: 16,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.55)',
+    marginTop: 12,
+    letterSpacing: 1,
   },
   footer: {
     position: 'absolute',
